@@ -1,0 +1,33 @@
+import os
+import requests
+import speech_recognition as sr
+from telegram.ext import Updater, MessageHandler, Filters
+
+# set up the Telegram bot and SpeechRecognition API client
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+r = sr.Recognizer()
+bot = Updater(BOT_TOKEN)
+
+def voice_handler(update, context):
+    chat_id = update.effective_chat.id
+    message = update.message
+
+    # download the voice message file and create an AudioFile object
+    voice = message.voice.get_file()
+    voice_file = voice.download()
+    with sr.AudioFile(voice_file) as source:
+        audio_data = r.record(source)
+
+    # use SpeechRecognition to transcribe the audio and extract information
+    text = r.recognize_google(audio_data)
+    # use the extracted text to search for information, e.g. using a search engine API
+
+    # return the information to the user
+    message_text = "Here's what I found: " + text
+    bot.send_message(chat_id=chat_id, text=message_text)
+
+# set up the message handler for voice messages
+bot.dispatcher.add_handler(MessageHandler(Filters.voice, voice_handler))
+
+# start the bot
+bot.start_polling()
